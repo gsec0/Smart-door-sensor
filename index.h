@@ -75,6 +75,27 @@ char webpage[] PROGMEM = R"=====(
         <div class="boxes"><p class="text" id="statusText">...</p></div>
     </div>
     <script>
+        function giveTime() {
+            var today = new Date();
+            var h = today.getHours();
+            var m = today.getMinutes();
+            h = checkTime(h);
+            m = checkTime(m);
+            t = h+m;
+
+            var sendTime = new XMLHttpRequest();
+            sendTime.open("POST", "/time", true);
+            sendTime.setRequestHeader("Content-type", "text/plain");
+            sendTime.send(t);
+        }
+        
+        function checkTime(i) {
+            if (i < 10) {i = "0" + i};  // add zero in front of numbers < 10
+            return i;
+        }
+    
+        window.onload = giveTime;
+        
         function receiveStatus() {
             var getStat = new XMLHttpRequest();
             getStat.open("GET", "/update", true);
@@ -86,7 +107,7 @@ char webpage[] PROGMEM = R"=====(
             }
             setTimeout(receiveStatus, 500);
         }
-        receiveStatus();
+        
         document.addEventListener('DOMContentLoaded', receiveStatus, false);
         
         function toggle() {

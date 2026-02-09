@@ -6,6 +6,10 @@
  * - Added error checking in initialisation
  * - Created a function makeRequest(byte,String) to send a HTTP request
  * - Added roadblocks in initialisation if an error occurs. The error is send as a notification.
+ * 
+ * v1.2 18/06/2020 01:00
+ * - Added a getTime() function to receive the time when a client connects to the server.
+ * - Added a calcTime() function to constantly keep track of time downto -1min accuracy.
  */
 
 #include <ESP8266HTTPClient.h>
@@ -39,6 +43,9 @@ String IFTTT_KEY = "";
 String IFTTT_URL;
 
 int16_t ax, ay, az;
+bool timeInc = true;
+byte minCount;
+byte hrCount;
 byte errorCheck = 0;
 float angle;
 long angle_i = 0;
@@ -47,6 +54,8 @@ bool trigger_pull;
 unsigned long timer;
 unsigned long accTimer;
 unsigned long httpTimer;
+unsigned long timeTimer;
+unsigned long timeKeeper;
 int httpCode;
 int offset[6] = {-3057, -777, 1335, 109, -10, -54};
 // OFFSET VALUES: -3057ax -777ay 1335az 109gx -10gy -54gz
@@ -166,6 +175,7 @@ void setup() {
 
 void loop() {
   server.handleClient();
+  calcTime();
   
   if (((unsigned long)millis() - accTimer) > accDelay) {
     accel.getAcceleration(&ax, &ay, &az);
@@ -246,7 +256,29 @@ void makeRequest(byte event, String payload) {
 }
 
 void getTime() {
-  
+  static String payload;
+  payload = server.arg("plain");
+  hrCount = payload.toInt() / 100;
+  minCount = payload.toInt() % 100;
+  Serial.print("The time is: ");Serial.println(hrCount*100+minCount);
+  timeInc = true;
+}
+
+void calcTime() {
+  if (timeInc) {
+    timeTimer = millis();
+    timeInc = false;
+  }
+  if (((unsigned long)millis() - timeTimer) >= 60000) {
+    minCount++;
+    if (minCount == 60) {
+      minCount = 0;
+      hrCount++;
+      hrCount = (hrCount == 24?0:hrCount);
+    }
+    Serial.print("The time is: ");Serial.println(hrCount*100+minCount);
+    timeInc = true;
+  }
 }
 /*
 void loadCredentials() {
