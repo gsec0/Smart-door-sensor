@@ -1,6 +1,11 @@
 /* CHANGE LOG
  * v1.0 17/06/2020 15:40
  * - Foundational sketch created and working.
+ * 
+ * v1.1 17/06/2020 23:00
+ * - Added error checking in initialisation
+ * - Created a function makeRequest(byte,String) to send a HTTP request
+ * - Added roadblocks in initialisation if an error occurs. The error is send as a notification.
  */
 
 #include <ESP8266HTTPClient.h>
@@ -21,7 +26,6 @@ MPU6050 accel;
 #define theInit 0
 #define theAlert 1
 #define theError 2
-
 
 const char* yourSSID = "admin";
 const char* yourPASS = "pass";
@@ -210,11 +214,6 @@ void setOffset() {
   accel.setXAccelOffset(offset[0]);
   accel.setYAccelOffset(offset[1]);
   accel.setZAccelOffset(offset[2]);
-  /*
-  accel.setXGyroOffset(offset[3]);
-  accel.setYGyroOffset(offset[4]);
-  accel.setZGyroOffset(offset[5]);
-  */
   Serial.println("Sensor offsets are set!");
 }
 
@@ -229,15 +228,10 @@ void updateWeb() {
   else server.send(200,"text/plain","INTRUDER!");
 }
 
-String concatUrl(byte event) {
-  String URL = IFTTT_URL1 + (event==0?eventInit:event==1?eventAlert:eventError) + IFTTT_URL2 + IFTTT_KEY;
-  return URL;
-}
-
 void makeRequest(byte event, String payload) {
   String URL = IFTTT_URL1 + (event==0?eventInit:event==1?eventAlert:eventError) + IFTTT_URL2 + IFTTT_KEY;
-  String pl1 = "{\"value1\":\"";
-  String pl2 = "\"}";
+  static String pl1 = "{\"value1\":\"";
+  static String pl2 = "\"}";
   String httpPayload = pl1 + payload + pl2;
   http.begin(URL);
   Serial.println(event==0?"Sending confirmation...":event==1?"Sending alert....":"Sending error at "+payload);
